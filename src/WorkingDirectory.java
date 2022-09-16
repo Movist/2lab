@@ -226,35 +226,31 @@ public class WorkingDirectory {
         Scanner sc = new Scanner(System.in);
         System.out.print("Введите имя каталога, который нужно найти:");
         String str = sc.nextLine();
-        String result;
-        int count = 0;
         dir = dir.getRoot().resolve(dir.subpath(0, level));
-        File[] files = dir.toFile().listFiles();
-        for (File file : files) {
-            if (file.isDirectory()) {
-                if (file.exists()) {
-                    result = file.getName();
-                    /*unpackFiles(file, result, str, count);*/
-                    count += unpackFiles(file, result, str, count);
-                }
+        final boolean[] res = {false};
+        if (Files.exists(dir)) {
+            try {
+                Files.walkFileTree(dir, new SimpleFileVisitor<>() {
+                    @Override
+                    public FileVisitResult postVisitDirectory(Path path, IOException ex)
+                            throws IOException {
+                        String newStr = path.getFileName().toString();
+                        if (newStr.equals(str)) {
+                            res[0] = true;
+                            System.out.println("Каталог существует");
+                        }
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            if (!res[0]) {
+                System.out.println("Каталога не существует");
             }
         }
-        if (count == 0) {
-            System.out.println("Каталог с именем " + str + " не существует");
-        } else System.out.println("Каталог с именем " + str + " существует");
+
     }
 
-    private int unpackFiles(File f, String result, String str, int count) {
-        for (File file : f.listFiles()) {
-            if (file.isDirectory()) {
-                result = file.getName();
-                if (result.equals(str)) {
-                    count++;
-                }
-                unpackFiles(file, result, str, count);
-            }
-        }
-        return count;
-    }
 
 }
